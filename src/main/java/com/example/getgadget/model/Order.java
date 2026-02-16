@@ -1,17 +1,43 @@
 package com.example.getgadget.model;
 
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Table;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "orders")
 public class Order {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private Long customerId;
+
+    @ElementCollection
+    @CollectionTable(name = "order_products", joinColumns = @JoinColumn(name = "order_id"))
+    @Column(name = "product_id", nullable = false)
     private List<Long> productIds = new ArrayList<>();
+
+    @Column(nullable = false)
     private BigDecimal totalAmount;
+
+    @Column(nullable = false)
     private String status;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     public Order() {

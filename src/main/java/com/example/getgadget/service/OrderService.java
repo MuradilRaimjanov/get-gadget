@@ -2,76 +2,65 @@ package com.example.getgadget.service;
 
 import com.example.getgadget.model.Order;
 import com.example.getgadget.model.Product;
+import com.example.getgadget.repository.OrderRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class OrderService {
 
-    private final Map<Long, Order> orders = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(0L);
+    private final OrderRepository orderRepository;
     private final ProductService productService;
     private final CustomerService customerService;
 
-    public OrderService(ProductService productService, CustomerService customerService) {
+    public OrderService(OrderRepository orderRepository, ProductService productService, CustomerService customerService) {
+        this.orderRepository = orderRepository;
         this.productService = productService;
         this.customerService = customerService;
     }
 
     public List<Order> findAll() {
-        return new ArrayList<>(orders.values());
+        return orderRepository.findAll();
     }
 
     public Order findById(Long id) {
-        Order order = orders.get(id);
-        if (order == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found: " + id);
-        }
-        return order;
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found: " + id));
     }
 
     public Order create(Order order) {
         validateOrderReferences(order);
-        long id = idGenerator.incrementAndGet();
-        order.setId(id);
+        order.setId(null);
         order.setCreatedAt(LocalDateTime.now());
         order.setTotalAmount(calculateTotal(order.getProductIds()));
         if (order.getStatus() == null || order.getStatus().isBlank()) {
             order.setStatus("NEW");
         }
-        orders.put(id, order);
-        return order;
+        return orderRepository.save(order);
     }
 
     public Order update(Long id, Order order) {
-        if (!orders.containsKey(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found: " + id);
-        }
+        Order existingOrder = findById(id);
         validateOrderReferences(order);
         order.setId(id);
-        Order existingOrder = orders.get(id);
         order.setCreatedAt(existingOrder.getCreatedAt());
         order.setTotalAmount(calculateTotal(order.getProductIds()));
         if (order.getStatus() == null || order.getStatus().isBlank()) {
             order.setStatus(existingOrder.getStatus());
         }
-        orders.put(id, order);
-        return order;
+        return orderRepository.save(order);
     }
 
     public void delete(Long id) {
-        if (orders.remove(id) == null) {
+        if (!orderRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found: " + id);
         }
+        orderRepository.deleteById(id);
     }
 
     private void validateOrderReferences(Order order) {

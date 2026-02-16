@@ -1,53 +1,48 @@
 package com.example.getgadget.service;
 
 import com.example.getgadget.model.Customer;
+import com.example.getgadget.repository.CustomerRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class CustomerService {
 
-    private final Map<Long, Customer> customers = new ConcurrentHashMap<>();
-    private final AtomicLong idGenerator = new AtomicLong(0L);
+    private final CustomerRepository customerRepository;
+
+    public CustomerService(CustomerRepository customerRepository) {
+        this.customerRepository = customerRepository;
+    }
 
     public List<Customer> findAll() {
-        return new ArrayList<>(customers.values());
+        return customerRepository.findAll();
     }
 
     public Customer findById(Long id) {
-        Customer customer = customers.get(id);
-        if (customer == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found: " + id);
-        }
-        return customer;
+        return customerRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found: " + id));
     }
 
     public Customer create(Customer customer) {
-        long id = idGenerator.incrementAndGet();
-        customer.setId(id);
-        customers.put(id, customer);
-        return customer;
+        customer.setId(null);
+        return customerRepository.save(customer);
     }
 
     public Customer update(Long id, Customer customer) {
-        if (!customers.containsKey(id)) {
+        if (!customerRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found: " + id);
         }
         customer.setId(id);
-        customers.put(id, customer);
-        return customer;
+        return customerRepository.save(customer);
     }
 
     public void delete(Long id) {
-        if (customers.remove(id) == null) {
+        if (!customerRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found: " + id);
         }
+        customerRepository.deleteById(id);
     }
 }
