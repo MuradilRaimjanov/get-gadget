@@ -6,11 +6,24 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "products")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Product {
 
     @Id
@@ -18,64 +31,20 @@ public class Product {
     private Long id;
 
     @Column(nullable = false)
+    @NotBlank(message = "name is required")
+    @Size(max = 255, message = "name must be <= 255 characters")
     private String name;
 
+    @Size(max = 2000, message = "description must be <= 2000 characters")
     private String description;
 
     @Column(nullable = false)
+    @NotNull(message = "price is required")
+    @Positive(message = "price must be positive")
     private BigDecimal price;
 
     @Column(nullable = false)
+    @NotNull(message = "stock is required")
+    @Min(value = 0, message = "stock must be >= 0")
     private Integer stock;
-
-    public Product() {
-    }
-
-    public Product(Long id, String name, String description, BigDecimal price, Integer stock) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-        this.price = price;
-        this.stock = stock;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public Integer getStock() {
-        return stock;
-    }
-
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
 }
